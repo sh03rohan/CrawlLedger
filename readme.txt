@@ -137,7 +137,7 @@ IP addresses of AI crawler visits are truncated by default (you can choose hashe
 5. Blocking AI training crawlers in robots.txt in one click; the resulting robots.txt block is shown below the tables.
 6. Schema markup gap filling: a before/after of a real WooCommerce product page with the added structured-data properties listed.
 7. llms.txt editor for AI assistants with a live preview of the served file.
-8. Settings: log retention, IP storage mode for privacy, per-crawler rate ceiling, the opt-in crawler-verification switch and uninstall behaviour.
+8. Settings: log retention, IP storage mode for privacy, per-crawler rate ceiling, and the opt-in crawler-verification switch, which states exactly what it fetches and what is sent.
 
 == Changelog ==
 
