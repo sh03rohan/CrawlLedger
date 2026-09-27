@@ -24,6 +24,8 @@ final class LoggerTest extends WP_UnitTestCase {
 	public function set_up(): void {
 		parent::set_up();
 		Activation::activate( false );
+		// Verification ships off; these cases are about the verification pipeline, so opt in.
+		Plugin::instance()->options()->set( 'verification_enabled', true );
 		update_option( Ranges::OPTION, array( 1 => array( 'cidrs' => array( '20.171.207.0/24' ), 'fetched' => time(), 'error' => '' ) ), false );
 	}
 
@@ -61,6 +63,29 @@ final class LoggerTest extends WP_UnitTestCase {
 		$this->assertSame( 15, $summary['capped'] );
 		$series = Plugin::instance()->repository()->series( 7, true );
 		$this->assertSame( 25, array_sum( array_column( $series, 'hits' ) ) );
+	}
+
+	public function test_verification_off_records_the_hit_without_looking_anything_up(): void {
+		Plugin::instance()->options()->set( 'verification_enabled', false );
+		$seen = array();
+		$spy  = static function ( $pre, $args, $url ) use ( &$seen ) {
+			$seen[] = $url;
+			return new \WP_Error( 'blocked', 'blocked by test' );
+		};
+		add_filter( 'pre_http_request', $spy, 1, 3 );
+		try {
+			Plugin::instance()->queue()->append( Record::hit( 'GPTBot', '20.171.207.10', 'GET', '/real/', 'example.org', 200, 0, 50 ) );
+			$summary = $this->ingest();
+		} finally {
+			remove_filter( 'pre_http_request', $spy, 1 );
+		}
+
+		$this->assertSame( 1, $summary['rows'] );
+		$this->assertSame( array(), $seen );
+
+		global $wpdb;
+		$table = Plugin::instance()->repository()->hits_table();
+		$this->assertSame( '0', $wpdb->get_var( "SELECT verified FROM {$table} ORDER BY id" ) ); // phpcs:ignore
 	}
 
 	public function test_disable_wp_cron_is_surfaced(): void {
