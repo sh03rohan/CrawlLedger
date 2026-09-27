@@ -24,7 +24,7 @@ External AI visibility checkers can tell you whether AI crawlers *can* reach you
 
 = Bot verification: real GPTBot or a fake? =
 
-Many scrapers impersonate GPTBot or Googlebot. CrawlLedger verifies every AI crawler visit with forward-confirmed reverse DNS and each vendor's published IP ranges. Spoofed hits are recorded as unverified and excluded from the default charts, so your AI traffic numbers are real.
+Many scrapers impersonate GPTBot or Googlebot. Switch verification on in Settings and CrawlLedger checks every AI crawler visit against each vendor's published IP ranges and, where available, forward-confirmed reverse DNS. Spoofed hits are recorded as unverified and excluded from the default charts, so your AI traffic numbers are real. Verification is off until you enable it, because it is the one feature that contacts the vendors.
 
 = Block or allow AI bots in robots.txt =
 
@@ -56,9 +56,11 @@ Non-bot front-end requests add zero database queries. Bot hits are appended to a
 
 == External services ==
 
-The plugin does not connect to any service of its own, has no accounts or API keys, and sends no analytics or telemetry. It makes exactly one kind of outbound request:
+**By default this plugin contacts nothing.** It has no service, account or API key of its own, sends no analytics or telemetry, and makes no outbound request on activation or on any page load. There is exactly one optional feature that reaches the internet, and it stays off until you switch it on.
 
-**Crawler IP-range documents, fetched from the crawler vendors themselves.** To verify that a visit claiming to be a given crawler really came from that vendor, the plugin needs the IP ranges each vendor publishes. Once a week (and once shortly after activation) a background job fetches these public JSON documents:
+= Crawler verification (opt-in, off by default) =
+
+A scraper can put "GPTBot" in its user agent. To tell a real crawler from an impostor the plugin needs the IP ranges each vendor publishes. Switch **Settings → Crawler verification** on and, from that point, a weekly background job fetches these public JSON documents:
 
 * OpenAI — `https://openai.com/gptbot.json`, `https://openai.com/chatgpt-user.json`, `https://openai.com/searchbot.json` — [Terms of use](https://openai.com/policies/terms-of-use), [Privacy policy](https://openai.com/policies/privacy-policy)
 * Google — `https://developers.google.com/static/search/apis/ipranges/googlebot.json`, `https://developers.google.com/static/search/apis/ipranges/special-crawlers.json` — [Terms of service](https://policies.google.com/terms), [Privacy policy](https://policies.google.com/privacy)
@@ -66,9 +68,11 @@ The plugin does not connect to any service of its own, has no accounts or API ke
 * Microsoft Bing — `https://www.bing.com/toolbox/bingbot.json` — [Terms of use](https://www.microsoft.com/en-us/servicesagreement), [Privacy statement](https://privacy.microsoft.com/privacystatement)
 * Apple — `https://search.developer.apple.com/applebot.json` — [Terms of use](https://www.apple.com/legal/internet-services/terms/site.html), [Privacy policy](https://www.apple.com/legal/privacy/)
 
-What is sent: a plain HTTP GET with the plugin's user agent (`CrawlLedger/<version>; <your site URL>`) so vendors can see who is fetching. No visitor data, no log data and nothing about your site's content is sent. The fetch runs in cron, never during a visitor's request. A failed fetch keeps the last good copy and never interrupts logging.
+What is sent: a plain HTTP GET carrying the user agent `CrawlLedger/<version>` and nothing else. No site URL, no visitor data, no log data, nothing about your content. The fetch runs in cron, never during a visitor's request, and a failed fetch keeps the last good copy without interrupting logging.
 
-**Reverse DNS lookups.** For crawlers that publish a hostname pattern instead of IP ranges (Googlebot, Bingbot, Applebot, Amazonbot, PetalBot), verification performs a reverse and forward DNS lookup of the crawler's IP address through your server's normal DNS resolver, exactly as a web server log analyser would. Results are cached for 24 hours.
+While verification is on, the plugin also performs reverse and forward DNS lookups of crawler IP addresses through your server's normal resolver, the way a web-server log analyser does, for the vendors that publish a hostname pattern instead of IP ranges (Googlebot, Bingbot, Applebot, Amazonbot, PetalBot). Results are cached for 24 hours.
+
+Switching verification off stops both immediately: the weekly job is unscheduled and no lookups are made. Visits are still logged; they are simply recorded as unchecked.
 
 == Privacy ==
 
@@ -94,7 +98,7 @@ Open the Crawlers tab, set GPTBot (training) or ChatGPT-User and OAI-SearchBot (
 
 = How do I know whether an AI bot visit is real? =
 
-Every logged visit is checked against the vendor's published IP ranges and, where available, forward-confirmed reverse DNS. Verified visits show a check mark; unverified ones are likely scrapers impersonating the crawler and are excluded from the default charts.
+Switch on Settings → Crawler verification first; it is off by default because it is the only feature that contacts the vendors. Once on, every logged visit is checked against the vendor's published IP ranges and, where available, forward-confirmed reverse DNS. Verified visits show a check mark; unverified ones are likely scrapers impersonating the crawler and are excluded from the default charts.
 
 = What is llms.txt and do I need it? =
 
@@ -106,7 +110,7 @@ Check the coverage banner at the top of the Overview. If a page cache serves res
 
 = Why does a crawler show as unverified? =
 
-Either the request came from an IP the vendor does not publish (likely a scraper impersonating the crawler), or the vendor publishes no ranges and no reverse-DNS pattern, in which case the column shows "n/a".
+If verification is switched off, nothing is checked and every visit stays unverified. With it on, an unverified visit means the request came from an IP the vendor does not publish (likely a scraper impersonating the crawler), or the vendor publishes no ranges and no reverse-DNS pattern, in which case the column shows "n/a".
 
 = My robots.txt rules do nothing. =
 
@@ -133,7 +137,7 @@ IP addresses of AI crawler visits are truncated by default (you can choose hashe
 5. Blocking AI training crawlers in robots.txt in one click; the resulting robots.txt block is shown below the tables.
 6. Schema markup gap filling: a before/after of a real WooCommerce product page with the added structured-data properties listed.
 7. llms.txt editor for AI assistants with a live preview of the served file.
-8. Settings: log retention, IP storage mode for privacy, per-crawler rate ceiling and uninstall behaviour.
+8. Settings: log retention, IP storage mode for privacy, per-crawler rate ceiling, the opt-in crawler-verification switch and uninstall behaviour.
 
 == Changelog ==
 

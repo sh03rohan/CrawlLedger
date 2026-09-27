@@ -51,12 +51,10 @@ final class Activation {
 		// Network-wide pieces, once. The queue directory (under uploads) gets its index.php and
 		// .htaccess before the first crawler hit can be written there.
 		$plugin->queue()->ensure();
-		$plugin->cron()->ensure_scheduled();
 
-		// Fetch ranges soon after activation rather than waiting a week; the cron backend runs it.
-		if ( ! wp_next_scheduled( 'crawlledger_ranges_initial' ) ) {
-			wp_schedule_single_event( time() + 30, Support\Cron::RANGES );
-		}
+		// Only the local jobs. The range fetch is the plugin's one third-party request and stays
+		// unscheduled until the user turns verification on, so activation contacts nobody.
+		$plugin->cron()->ensure_scheduled();
 	}
 
 	/**

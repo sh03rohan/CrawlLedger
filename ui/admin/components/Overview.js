@@ -75,6 +75,7 @@ export default function Overview() {
 	const [ stats, setStats ] = useState( null );
 	const [ urls, setUrls ] = useState( null );
 	const [ coverage, setCoverage ] = useState( null );
+	const [ settings, setSettings ] = useState( null );
 	const [ error, setError ] = useState( '' );
 
 	const load = () => {
@@ -84,8 +85,15 @@ export default function Overview() {
 		api.get( '/stats', { range, verified: verified ? 1 : 0 } ).then( setStats ).catch( fail );
 		api.get( '/urls', { verified: verified ? 1 : 0 } ).then( setUrls ).catch( fail );
 		api.get( '/coverage' ).then( setCoverage ).catch( fail );
+		api.get( '/settings' ).then( setSettings ).catch( fail );
 	};
 	useEffect( load, [ range, verified ] );
+	// Verification off means nothing has been checked, so the "verified only" filter must not hide everything.
+	useEffect( () => {
+		if ( settings && ! settings.verification_enabled ) {
+			setVerified( false );
+		}
+	}, [ settings ] );
 
 	if ( error ) {
 		return <p className="clg-error">{ error }</p>;
@@ -93,6 +101,8 @@ export default function Overview() {
 	if ( ! stats ) {
 		return <div className="clg-loading"><Spinner /></div>;
 	}
+	// Until the user opts in, nothing has been checked, so "verified only" would show an empty chart.
+	const verifying = settings ? settings.verification_enabled : true;
 
 	const historyDays = stats.history_days;
 	const ranges = [ [ '7d', 7 ], [ '30d', 30 ], [ '90d', 90 ] ];
@@ -120,12 +130,16 @@ export default function Overview() {
 								</button>
 							) ) }
 						</div>
-						<ToggleControl label={ __( 'Verified crawlers only', 'crawlledger-ai-crawler-log' ) } checked={ verified } onChange={ setVerified } __nextHasNoMarginBottom />
+						{ verifying && <ToggleControl label={ __( 'Verified crawlers only', 'crawlledger-ai-crawler-log' ) } checked={ verified } onChange={ setVerified } __nextHasNoMarginBottom /> }
 						<span className="clg-muted clg-toolbar-note">
-							{ sprintf(
-								/* translators: 1: verified count, 2: unverified count */
-								__( '%1$s verified · %2$s unverified', 'crawlledger-ai-crawler-log' ), formatNumber( stats.totals.verified ), formatNumber( stats.totals.unverified ) ) }
-							<span className="clg-help" title={ __( 'Unverified: the user agent claimed a crawler but the IP is not in the vendor\'s published ranges and reverse DNS did not confirm it — or the vendor publishes neither.', 'crawlledger-ai-crawler-log' ) }>?</span>
+							{ verifying ? (
+								<>
+									{ sprintf(
+										/* translators: 1: verified count, 2: unverified count */
+										__( '%1$s verified · %2$s unverified', 'crawlledger-ai-crawler-log' ), formatNumber( stats.totals.verified ), formatNumber( stats.totals.unverified ) ) }
+									<span className="clg-help" title={ __( 'Unverified: the user agent claimed a crawler but the IP is not in the vendor\'s published ranges and reverse DNS did not confirm it — or the vendor publishes neither.', 'crawlledger-ai-crawler-log' ) }>?</span>
+								</>
+							) : __( 'Verification is off — visits are logged but not checked.', 'crawlledger-ai-crawler-log' ) }
 						</span>
 					</div>
 

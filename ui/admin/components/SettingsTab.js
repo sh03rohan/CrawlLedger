@@ -21,7 +21,7 @@ export default function SettingsTab() {
 	const [ saving, setSaving ] = useState( false );
 	const [ message, setMessage ] = useState( '' );
 
-	const pick = ( s ) => ( { retention_days: s.retention_days, ip_mode: s.ip_mode, rate_cap_per_minute: s.rate_cap_per_minute, keep_data_on_uninstall: s.keep_data_on_uninstall } );
+	const pick = ( s ) => ( { retention_days: s.retention_days, ip_mode: s.ip_mode, rate_cap_per_minute: s.rate_cap_per_minute, keep_data_on_uninstall: s.keep_data_on_uninstall, verification_enabled: s.verification_enabled } );
 	useEffect( () => {
 		api.get( '/settings' ).then( ( s ) => {
 			setSaved( { ...pick( s ), retention_choices: s.retention_choices } ); setForm( pick( s ) );
@@ -77,6 +77,17 @@ export default function SettingsTab() {
 					<TextControl type="number" min={ 10 } max={ 100000 } label={ __( 'Per-crawler ceiling, visits per minute', 'crawlledger-ai-crawler-log' ) } value={ form.rate_cap_per_minute } onChange={ ( v ) => setForm( { ...form, rate_cap_per_minute: parseInt( v || '0', 10 ) } ) } __nextHasNoMarginBottom />
 					<span className="clg-muted">{ __( 'Above this, visits are still counted in daily totals but per-request rows are not stored, so a flood cannot turn the log into an amplifier.', 'crawlledger-ai-crawler-log' ) }</span>
 				</div>
+			</Panel>
+
+			<Panel title={ __( 'Crawler verification', 'crawlledger-ai-crawler-log' ) } aside={ form.verification_enabled ? <span className="clg-ok">{ __( '● on', 'crawlledger-ai-crawler-log' ) }</span> : <span className="clg-muted">{ __( 'off', 'crawlledger-ai-crawler-log' ) }</span> }>
+				<p className="clg-blurb">{ __( 'A scraper can put "GPTBot" in its user agent. Verification checks each visit against the IP ranges the vendor publishes and, where the vendor offers one, a forward-confirmed reverse DNS lookup. Without it every visit is logged but recorded as unchecked.', 'crawlledger-ai-crawler-log' ) }</p>
+				<ToggleControl
+					label={ __( 'Check crawler identity against vendor sources', 'crawlledger-ai-crawler-log' ) }
+					help={ __( 'Turning this on lets the plugin fetch the public IP-range files published by OpenAI, Google, Perplexity, Microsoft and Apple once a week, and look up reverse DNS for crawler addresses. Those requests carry only the plugin name and version — no site URL, no visitor data, nothing about your content. Until you turn it on the plugin makes no outbound request at all.', 'crawlledger-ai-crawler-log' ) }
+					checked={ !! form.verification_enabled }
+					onChange={ ( v ) => setForm( { ...form, verification_enabled: v } ) }
+					__nextHasNoMarginBottom
+				/>
 			</Panel>
 
 			<Panel title={ __( 'Uninstall', 'crawlledger-ai-crawler-log' ) }>

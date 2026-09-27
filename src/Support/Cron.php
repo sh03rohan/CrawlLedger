@@ -60,11 +60,49 @@ final class Cron implements Module {
 	 * @return array<mixed>
 	 */
 	private function events(): array {
-		return array(
+		$events = array(
 			self::INGEST => array( 5 * MINUTE_IN_SECONDS, 'crawlledger_5min' ),
 			self::ROLLUP => array( DAY_IN_SECONDS, 'daily' ),
-			self::RANGES => array( WEEK_IN_SECONDS, 'weekly' ),
 		);
+		if ( self::verification_enabled() ) {
+			$events[ self::RANGES ] = array( WEEK_IN_SECONDS, 'weekly' );
+		}
+		return $events;
+	}
+
+	/**
+	 * Whether the user has opted in to crawler verification.
+	 *
+	 * @return bool
+	 */
+	private static function verification_enabled(): bool {
+		$settings = get_option( Options::OPTION, array() );
+		return ! empty( $settings['verification_enabled'] );
+	}
+
+	/**
+	 * Schedule or drop the weekly range fetch after the setting changes, and fetch once straight
+	 * away when it has just been turned on so the user sees the result of their own click.
+	 *
+	 * @param bool $enabled New value.
+	 * @return void
+	 */
+	public function sync_verification( bool $enabled ): void {
+		if ( ! $enabled ) {
+			wp_clear_scheduled_hook( self::RANGES );
+			if ( function_exists( 'as_unschedule_all_actions' ) ) {
+				as_unschedule_all_actions( self::RANGES, array(), self::GROUP );
+			}
+			return;
+		}
+		$this->ensure_scheduled();
+		if ( $this->has_action_scheduler() ) {
+			if ( function_exists( 'as_schedule_single_action' ) ) {
+				as_schedule_single_action( time() + 10, self::RANGES, array(), self::GROUP );
+			}
+		} elseif ( ! wp_next_scheduled( self::RANGES ) ) {
+			wp_schedule_single_event( time() + 10, self::RANGES );
+		}
 	}
 
 	/**
@@ -100,7 +138,7 @@ final class Cron implements Module {
 	 * @return void
 	 */
 	public function unschedule_all(): void {
-		foreach ( array_keys( $this->events() ) as $hook ) {
+		foreach ( array( self::INGEST, self::ROLLUP, self::RANGES ) as $hook ) {
 			wp_clear_scheduled_hook( $hook );
 			if ( function_exists( 'as_unschedule_all_actions' ) ) {
 				as_unschedule_all_actions( $hook, array(), self::GROUP );

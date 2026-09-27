@@ -206,6 +206,7 @@ final class Ingest implements Module {
 		$cap     = max( 1, (int) $this->options->get( 'rate_cap_per_minute', 600 ) );
 		$ip_mode = (string) $this->options->get( 'ip_mode', Options::IP_MODE_TRUNCATED );
 		$salt    = $this->salt();
+		$verify  = (bool) $this->options->get( 'verification_enabled', false );
 
 		$rows    = array();
 		$daily   = array();
@@ -221,8 +222,9 @@ final class Ingest implements Module {
 			if ( '' === $at ) {
 				continue;
 			}
-			$ip       = Ip::is_valid( $rec['ip'] ) ? $rec['ip'] : '';
-			$verified = '' !== $ip && $this->verifier->verify( $bot_id, $ip );
+			$ip = Ip::is_valid( $rec['ip'] ) ? $rec['ip'] : '';
+			// Verification is opt-in: with it off nothing is looked up and no request leaves the site.
+			$verified = $verify && '' !== $ip && $this->verifier->verify( $bot_id, $ip );
 			$status   = (int) $rec['status'];
 			$bucket   = Repository::bucket( $status );
 			$day      = substr( $at, 0, 10 );

@@ -39,6 +39,7 @@ final class Options {
 			'ip_mode'                => self::IP_MODE_TRUNCATED,
 			'ip_salt'                => '',
 			'rate_cap_per_minute'    => 600,
+			'verification_enabled'   => false, // Opt-in: until it is on, nothing leaves the site.
 			'robots'                 => array(), // bot_id => 'allow' | 'block'.
 			'schema_enabled'         => true,
 			'llms_enabled'           => true,

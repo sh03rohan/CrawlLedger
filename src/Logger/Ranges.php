@@ -107,7 +107,7 @@ final class Ranges implements Module {
 			$url,
 			array(
 				'timeout'    => 10,
-				'user-agent' => 'CrawlLedger/' . CRAWLLEDGER_VERSION . '; ' . home_url( '/' ),
+				'user-agent' => 'CrawlLedger/' . CRAWLLEDGER_VERSION,
 			)
 		);
 		if ( is_wp_error( $response ) ) {

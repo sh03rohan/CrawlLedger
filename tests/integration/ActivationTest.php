@@ -72,6 +72,43 @@ final class ActivationTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Guideline 7: activation must not contact anyone. Verification is opt-in, so the weekly
+	 * vendor fetch is not even scheduled until an administrator asks for it.
+	 */
+	public function test_activation_makes_no_outbound_request(): void {
+		$seen = array();
+		$spy  = static function ( $pre, $args, $url ) use ( &$seen ) {
+			$seen[] = $url;
+			return new \WP_Error( 'blocked', 'blocked by test' );
+		};
+		add_filter( 'pre_http_request', $spy, 1, 3 );
+		try {
+			delete_option( \CrawlLedger\Support\Options::OPTION );
+			Plugin::instance()->options()->reset();
+			Activation::activate( false );
+		} finally {
+			remove_filter( 'pre_http_request', $spy, 1 );
+		}
+		$this->assertSame( array(), $seen );
+		$this->assertFalse( (bool) Plugin::instance()->options()->get( 'verification_enabled' ) );
+		$this->assertFalse( (bool) wp_next_scheduled( \CrawlLedger\Support\Cron::RANGES ) );
+	}
+
+	public function test_range_fetch_is_scheduled_only_after_opting_in(): void {
+		$cron = Plugin::instance()->cron();
+		$cron->sync_verification( false );
+		$this->assertFalse( (bool) wp_next_scheduled( \CrawlLedger\Support\Cron::RANGES ) );
+
+		Plugin::instance()->options()->set( 'verification_enabled', true );
+		$cron->sync_verification( true );
+		$this->assertTrue( (bool) wp_next_scheduled( \CrawlLedger\Support\Cron::RANGES ) );
+
+		Plugin::instance()->options()->set( 'verification_enabled', false );
+		$cron->sync_verification( false );
+		$this->assertFalse( (bool) wp_next_scheduled( \CrawlLedger\Support\Cron::RANGES ) );
+	}
+
+	/**
 	 * Migrations run from plugins_loaded, never from the activation hook.
 	 */
 	public function test_migration_runs_when_version_differs(): void {

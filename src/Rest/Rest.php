@@ -355,6 +355,7 @@ final class Rest implements Module {
 				'items' => array( 'type' => 'integer' ),
 			),
 			'llms_include_posts'     => array( 'type' => 'boolean' ),
+			'verification_enabled'   => array( 'type' => 'boolean' ),
 			'keep_data_on_uninstall' => array( 'type' => 'boolean' ),
 		);
 	}
@@ -584,6 +585,7 @@ final class Rest implements Module {
 				'history_days'           => $this->options->history_days(),
 				'ip_mode'                => (string) $all['ip_mode'],
 				'rate_cap_per_minute'    => (int) $all['rate_cap_per_minute'],
+				'verification_enabled'   => (bool) $all['verification_enabled'],
 				'robots'                 => (object) $all['robots'],
 				'schema_enabled'         => (bool) $all['schema_enabled'],
 				'schema_provider'        => Schema::provider(),
@@ -656,6 +658,16 @@ final class Rest implements Module {
 				}
 			}
 			$values['robots'] = $robots;
+		}
+		if ( isset( $params['verification_enabled'] ) ) {
+			$wanted = (bool) $params['verification_enabled'];
+			// The weekly vendor fetch is scheduled here, on an explicit request from an administrator,
+			// and nowhere else.
+			if ( $wanted !== (bool) $this->options->get( 'verification_enabled', false ) ) {
+				$values['verification_enabled'] = $wanted;
+				$this->options->set( 'verification_enabled', $wanted );
+				$this->cron->sync_verification( $wanted );
+			}
 		}
 		foreach ( array( 'schema_enabled', 'llms_enabled', 'llms_include_posts', 'keep_data_on_uninstall' ) as $flag ) {
 			if ( isset( $params[ $flag ] ) ) {

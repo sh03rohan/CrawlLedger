@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-24T05:58:57+00:00\n"
+"POT-Creation-Date: 2026-09-27T04:43:59+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: crawlledger-ai-crawler-log\n"
@@ -451,6 +451,10 @@ msgstr ""
 
 #: assets/admin.js:7
 msgid "Unverified: the user agent claimed a crawler but the IP is not in the vendor's published ranges and reverse DNS did not confirm it — or the vendor publishes neither."
+msgstr ""
+
+#: assets/admin.js:7
+msgid "Verification is off — visits are logged but not checked."
 msgstr ""
 
 #: assets/admin.js:7
@@ -959,6 +963,30 @@ msgstr ""
 
 #: assets/admin.js:22
 msgid "Above this, visits are still counted in daily totals but per-request rows are not stored, so a flood cannot turn the log into an amplifier."
+msgstr ""
+
+#: assets/admin.js:22
+msgid "Crawler verification"
+msgstr ""
+
+#: assets/admin.js:22
+msgid "● on"
+msgstr ""
+
+#: assets/admin.js:22
+msgid "off"
+msgstr ""
+
+#: assets/admin.js:22
+msgid "A scraper can put \"GPTBot\" in its user agent. Verification checks each visit against the IP ranges the vendor publishes and, where the vendor offers one, a forward-confirmed reverse DNS lookup. Without it every visit is logged but recorded as unchecked."
+msgstr ""
+
+#: assets/admin.js:22
+msgid "Check crawler identity against vendor sources"
+msgstr ""
+
+#: assets/admin.js:22
+msgid "Turning this on lets the plugin fetch the public IP-range files published by OpenAI, Google, Perplexity, Microsoft and Apple once a week, and look up reverse DNS for crawler addresses. Those requests carry only the plugin name and version — no site URL, no visitor data, nothing about your content. Until you turn it on the plugin makes no outbound request at all."
 msgstr ""
 
 #: assets/admin.js:22
